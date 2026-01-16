@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+
+# Variables sensibles
+.env
+
+# Base de datos local
+*.db
+*.sqlite3
+
+# Logs y SO
+*.log
+.DS_Store

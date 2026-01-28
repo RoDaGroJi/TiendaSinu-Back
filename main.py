@@ -12,28 +12,27 @@ from app.routes import productos, inventario, ventas, presentaciones, auth_users
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+cors_origins_str = os.getenv("CORS_ORIGINS", "")
 app = FastAPI(
     title="SinuTienda API",
     description="API para gestión de tienda con inventario y ventas",
     version="1.0.0"
 )
-cors_origins_str = os.getenv("CORS_ORIGINS", "")
-
+# Si la variable existe, la dividimos; si no, permitimos "*" (o un valor por defecto)
 if cors_origins_str:
-    # Limpia espacios y evita elementos vacíos
-    origins = [o.strip() for o in cors_origins_str.split(",") if o.strip()]
+    origins = [origin.strip() for origin in cors_origins_str.split(",")]
 else:
-    # Si la variable está vacía o no existe, permitimos todo para que funcione
-    logger.warning("⚠️ CORS_ORIGINS no definida. Usando '*' para permitir acceso.")
+    # Durante desarrollo o si olvidas la variable, esto evitará que se bloquee
     origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["https://tiendasinu-front-production.up.railway.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 models.Base.metadata.create_all(bind=engine)
 logger.info("✅ Base de datos inicializada")
 

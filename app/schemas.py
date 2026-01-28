@@ -4,8 +4,8 @@ from typing import Optional, List
 from enum import Enum
 
 class UserRole(str, Enum):
-    ADMIN = "admin"
-    VENDEDOR = "vendedor"
+    admin = "admin"
+    vendedor = "vendedor"
 
 class MovementType(str, Enum):
     INGRESO = "ingreso"
@@ -18,14 +18,63 @@ class BaseAuditSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-# Lo que se necesita para crear un producto
-class ProductCreate(BaseModel):
+# --- ESQUEMAS PARA MEDIDAS ---
+class UnitMeasureCreate(BaseModel):
     name: str
-    description: str
-    unit_measure: str # 'kg' o 'unidad'
+    abbreviation: str
+
+class UnitMeasureResponse(BaseModel):
+    id: int
+    name: str
+    abbreviation: str
+    
+    model_config = ConfigDict(from_attributes=True)
+
+# --- ESQUEMAS PARA PRESENTACIONES ---
+class PresentationCreate(BaseModel):
+    unit_measure_id: int
+    quantity: float
     purchase_price: float
     sale_price: float
+    description: Optional[str] = None
+    current_stock: int = 0
+
+class PresentationUpdate(BaseModel):
+    unit_measure_id: Optional[int] = None
+    quantity: Optional[float] = None
+    purchase_price: Optional[float] = None
+    sale_price: Optional[float] = None
+    description: Optional[str] = None
+    current_stock: Optional[int] = None
+
+class PresentationResponse(BaseModel):
+    id: int
+    product_id: int
+    unit_measure_id: int
+    quantity: float
+    purchase_price: float
+    sale_price: float
+    description: Optional[str]
+    current_stock: int
+    unit_measure: Optional[UnitMeasureResponse] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+# --- ESQUEMAS PARA PRODUCTOS ---
+class ProductCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
     category: str
+    purchase_price: Optional[float] = 0.0
+    sale_price: Optional[float] = 0.0
+    # Las presentaciones se crean por separado
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    purchase_price: Optional[float] = None
+    sale_price: Optional[float] = None
 
 class StockShort(BaseModel):
     current_quantity: float
@@ -36,20 +85,23 @@ class StockShort(BaseModel):
 class ProductPublic(BaseModel):
     id: int
     name: str
-    description: str
-    unit_measure: str
-    sale_price: float
+    description: Optional[str]
     category: str
+    sale_price: float
+    presentations: List[PresentationResponse] = []
+
+    model_config = ConfigDict(from_attributes=True)
 
 # Lo que ve el ADMIN (Privado)
 class ProductAdmin(ProductPublic):
-    purchase_price: float
     status: bool
-    # Agregamos la relación aquí para que Pydantic la procese
-    stock: Optional[StockShort] = None 
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    purchase_price: Optional[float] = None
+    sale_price: Optional[float] = None
+    stock: Optional[StockShort] = None
     
     model_config = ConfigDict(from_attributes=True)
-    
 
 class StockSchema(BaseModel):
     product_id: int
@@ -62,7 +114,6 @@ class MovementCreate(BaseModel):
     quantity: float
     type: MovementType
     observation: Optional[str] = None
-    # El user_id se obtendrá automáticamente del token JWT en el backend
 
 class MovementResponse(BaseAuditSchema):
     id: int
@@ -75,7 +126,9 @@ class MovementResponse(BaseAuditSchema):
 # Esquema para los productos individuales dentro de una venta
 class SaleItemSchema(BaseModel):
     product_id: int
+    presentation_id: Optional[int] = None
     product_name: str
+    presentation_description: Optional[str] = None
     quantity: float
     price_at_time: float
 
@@ -122,4 +175,17 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
     role: Optional[str] = None
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    role: str = "vendedor"
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    role: str
+    status: bool
+    
+    model_config = ConfigDict(from_attributes=True)
 

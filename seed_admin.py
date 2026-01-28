@@ -1,15 +1,18 @@
 from sqlalchemy.orm import Session
-from app.database import SessionLocal, engine
+from app.database import SessionLocal, engine, Base
 from app.models import User, UserRole
 from app.auth import get_password_hash
 import sys
 
 def create_first_admin():
+    # Crear todas las tablas primero
+    Base.metadata.create_all(bind=engine)
+    
     db: Session = SessionLocal()
     
     # Datos del administrador - Puedes cambiarlos aquí
-    username = "admin_central"
-    password = "SuperPassword2026" # ¡Cámbiala después!
+    username = "admin"
+    password = "admin123" # ¡Cámbiala después!
 
     # Verificar si ya existe
     existing_user = db.query(User).filter(User.username == username).first()
@@ -22,7 +25,7 @@ def create_first_admin():
         new_admin = User(
             username=username,
             password_hash=get_password_hash(password),
-            role=UserRole.ADMIN,
+            role=UserRole.admin,
             status=True
         )
         
